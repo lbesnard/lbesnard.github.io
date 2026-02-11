@@ -26,7 +26,7 @@ Now:
 
 - Open terminal -> Check on TODO list and focus on what needs to be done.
 
-![Example of tasks list when opening a new terminal](2026-02-11_17:56:43.png)
+![Example of tasks list when opening a new terminal](../tasklist.png)
 
 ---
 
@@ -45,9 +45,8 @@ This setup does three things:
    - Import them to Taskwarrior as actionable daily tasks
 
 3. **Fast, keyboard-driven management**
-   - Everything via `fzf`
+   - Everything via `fzf` and terminal
    - No browser dependency
-   - No mental friction
 
 ---
 

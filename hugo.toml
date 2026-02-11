@@ -4,24 +4,31 @@ title = 'Wanders of a Nerd'
 theme = 'PaperMod'
 
 [params]
-# This enables the "Profile Mode" on the home page
 env = "production"
 description = "Wanders of a Nerd - personal blog"
 author = "L. Besnard"
+# This keeps the header (and your identity) visible as you scroll
+ShowShareButtons = true
+showFullTextContent = false
 
-[params.homeInfoParams]
-Title = "Grid"
-Content = "Welcome to my lab."
+# --- TOP LEFT BRANDING ---
+# This stays visible on every page (About, Posts, etc.)
+[params.label]
+text = "L. Besnard"
+icon = "/myspace.png"
+iconHeight = 35
 
+# --- HOME PAGE CONFIG ---
 [params.profileMode]
 enabled = true
 title = "Wanders of a Nerd"
-# subtitle = "Welcome to my lab."
-imageUrl = "/myspace.png" # Path to your image
+subtitle = "Data Scientist @ IMOS | AODN"
+imageUrl = "/myspace.png"
 imageTitle = "My Avatar"
-imageWidth = 120          # Adjust size as needed
+imageWidth = 120
 imageHeight = 120
 
+# These icons appear on the Home Page under your bio
 [[params.socialIcons]]
 name = "github"
 url = "https://github.com/lbesnard"
@@ -38,7 +45,8 @@ url = "mailto:laurent.besnard@utas.edu.au"
 name = "website"
 url = "https://imos.org.au"
 
-
+# --- TOP NAVIGATION MENU ---
+# These links stay in the top right on every page
 [[menu.main]]
 name = "About"
 url = "/about"
@@ -48,3 +56,8 @@ weight = 10
 name = "Posts"
 url = "/posts"
 weight = 20
+
+[[menu.main]]
+name = "Vimeo"
+url = "https://vimeo.com/user31834663"
+weight = 30
