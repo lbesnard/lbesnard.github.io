@@ -3,6 +3,48 @@ languageCode = 'en-us'
 title = 'Wanders of a Nerd'
 theme = 'PaperMod'
 
+[params]
+# This enables the "Profile Mode" on the home page
+env = "production"
+description = "Wanders of a Nerd - personal blog"
+author = "L. Besnard"
+
 [params.homeInfoParams]
 Title = "Grid"
 Content = "Welcome to my lab."
+
+[params.profileMode]
+enabled = true
+title = "Wanders of a Nerd"
+# subtitle = "Welcome to my lab."
+imageUrl = "/myspace.png" # Path to your image
+imageTitle = "My Avatar"
+imageWidth = 120          # Adjust size as needed
+imageHeight = 120
+
+[[params.socialIcons]]
+name = "github"
+url = "https://github.com/lbesnard"
+
+[[params.socialIcons]]
+name = "vimeo"
+url = "https://vimeo.com/user31834663"
+
+[[params.socialIcons]]
+name = "email"
+url = "mailto:laurent.besnard@utas.edu.au"
+
+[[params.socialIcons]]
+name = "website"
+url = "https://imos.org.au"
+
+
+[[menu.main]]
+name = "About"
+url = "/about"
+weight = 10
+
+[[menu.main]]
+name = "Posts"
+url = "/posts"
+weight = 20
