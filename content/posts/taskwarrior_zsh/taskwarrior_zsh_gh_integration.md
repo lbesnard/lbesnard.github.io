@@ -26,6 +26,8 @@ Now:
 
 - Open terminal -> Check on TODO list and focus on what needs to be done.
 
+![Example of tasks list when opening a new terminal](2026-02-11_17:56:43.png)
+
 ---
 
 # 1. The Philosophy
@@ -53,11 +55,11 @@ This setup does three things:
 
 You need:
 
-- [Taskwarrior](https://taskwarrior.org/) – https://github.com/GothenburgBitFactory/taskwarrior
-- [fzf](https://github.com/junegunn/fzf) – https://github.com/junegunn/fzf
-- [jq](https://github.com/jqlang/jq) – https://github.com/jqlang/jq
-- [GitHub CLI (`gh`)](https://github.com/cli/cli) – https://github.com/cli/cli
-- [Zsh](https://www.zsh.org/) – https://sourceforge.net/projects/zsh/
+- [Taskwarrior](https://taskwarrior.org/) – <https://github.com/GothenburgBitFactory/taskwarrior>
+- [fzf](https://github.com/junegunn/fzf) – <https://github.com/junegunn/fzf>
+- [jq](https://github.com/jqlang/jq) – <https://github.com/jqlang/jq>
+- [GitHub CLI (`gh`)](https://github.com/cli/cli) – <https://github.com/cli/cli>
+- [Zsh](https://www.zsh.org/) – <https://sourceforge.net/projects/zsh/>
 - [tmux](https://github.com/tmux/tmux) (required for auto daily review)
 
 ---
@@ -75,7 +77,7 @@ It:
   - `ENTER` → open in browser
   - `CTRL-T` → import into Taskwarrior
 
-Add this to your `~/.config/gh/config.yml` and modify the `ORG```` and `PROJECT_NUMBER``` values:
+Add this to your `~/.config/gh/config.yml` and modify the `ORG```` and`PROJECT_NUMBER``` values:
 
 ```yaml
 project-sprint-taskwarrior: |-
