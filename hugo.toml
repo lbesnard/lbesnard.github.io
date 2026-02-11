@@ -1,4 +1,8 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://lbesnard.github.io/'
 languageCode = 'en-us'
-title = 'My New Hugo Site'
+title = 'Wanders of a Nerd'
 theme = 'PaperMod'
+
+[params.homeInfoParams]
+Title = "Grid"
+Content = "Welcome to my lab."
