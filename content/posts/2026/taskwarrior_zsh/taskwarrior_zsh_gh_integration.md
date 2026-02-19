@@ -14,16 +14,16 @@ The goal of this setup is simple:
 
 - See my **tasks for today every time I open a terminal/panel**
 - Import GitHub issues directly into Taskwarrior using the latest GitHub CLI features.
-- Force a morning check-in ritual using a custom Python TUI.
+- Force a morning check-in ritual using a newly developed Python TUI.
 - Use "Life Hacks" over "Discipline" to stop hyperfocusing on fun tasks while avoiding important ones.
 
 I’m very good at avoiding imposed structure. It's been a life long journey.
 My TODO list must be in in my face, otherwise, I'll hyperfocus 200% on one fun task and succeed beautifully at avoiding what I don't want to do.
 
-My Current worfklow is now:
+My Current worfklow is:
 
-- Open terminal first time of the day -> triggers automatically [task-tui](https://github.com/lbesnard/task-tui) to review and add new tasks easily so it's not a burden
-- Every time a new terminal or panel is opened, i see my current tasks
+- Open a terminal at the start of the day -> triggers automatically [task-tui](https://github.com/lbesnard/task-tui) to review and add new tasks easily so it's not a burden
+- Every time a new terminal or panel is opened, i see my current tasks for today only:
   ![Example of tasks list when opening a new terminal](../tasklist.png)
 
 ---
@@ -32,7 +32,7 @@ My Current worfklow is now:
 
 This setup does three things:
 
-1. **Morning checkpoint (automatic)**
+1. **Morning checkpoint with `task-tui`(automatic)**
    - When opening the first new terminal session/panel:
      - Review overdue and due-today tasks
      - Close, postpone, or reschedule them
@@ -42,7 +42,7 @@ This setup does three things:
    - Select sprint/iteration issues
    - Import them to Taskwarrior as actionable daily tasks
 
-3. **Fast, keyboard-driven management**
+3. **Fast, keyboard-driven management with aliases**
    - Everything via `fzf` and terminal
    - No browser dependency
 
@@ -56,14 +56,16 @@ You need:
 - [task-tui](https://github.com/lbesnard/task-tui)
 - [fzf](https://github.com/junegunn/fzf)
 - [jq](https://github.com/jqlang/jq)
-- [GitHub CLI (`gh`)](https://github.com/cli/cli) – <https://github.com/cli/cli>
-- [Zsh](https://www.zsh.org/)/zsh/>
-- [tmux](https://github.com/tmux/tmux) (required for auto daily review)
+- [GitHub CLI (`gh`)](https://github.com/cli/cli)
+- [Zsh](https://www.zsh.org/)
+- [tmux](https://github.com/tmux/tmux) (required for auto daily review, but could be adapted easily)
 
 # 3. Task-TUI: The Review Engine
 
-[task-tui](https://github.com/lbesnard/task-tui) is a Terminal User Interface (TUI) for Taskwarrior, built with the Python Textual framework. It provides a seamless, keyboard-driven workflow with live updates, fuzzy searching, and automatic syncing.
-p
+[task-tui](https://github.com/lbesnard/task-tui) is a Terminal User Interface (TUI) for Taskwarriorv3, built with the Python Textual framework. It provides a seamless, keyboard-driven workflow with live updates, fuzzy searching, and automatic syncing with taskchampion.
+
+I've tried [taskwarrior-tui](https://github.com/kdheepak/taskwarrior-tui) but could not make it work on my machine because of using taskwarriorV3.
+
 ![Example of task-tui](../tasktui.png)
 
 It replaces complex `task` CLI sequences with fast, discoverable key-driven actions.
@@ -93,7 +95,7 @@ It replaces complex `task` CLI sequences with fast, discoverable key-driven acti
 - `u` → Undo last action
 - `q` → Quit and Sync
 
-Task-TUI reads directly from your `.taskrc`. No additional configuration is required. If a `taskserver` is configured, synchronisation happens automatically when the application closes.
+No additional configuration is required. If a `taskserver` is configured, synchronisation happens automatically when the application closes.
 
 Instead of memorising complex `task modify` commands, everything becomes fast, visual, and muscle-memory driven.
 
@@ -184,6 +186,8 @@ gh project-sprint-taskwarrior
 
 And import sprint tasks directly into your day with `CTRL-T`.
 
+This snippet would need to be adapted depending on your project column names.
+
 ---
 
 # 5. Automatic Morning Check-in (Zsh + TMUX)
@@ -192,9 +196,7 @@ This runs **once per day** when opening a new tmux terminal.
 
 It:
 
-- Reviews pending tasks
-- Lets you complete / postpone / delete
-- Prompts you to add new tasks
+- calls `task-tui`
 - Shows today's plan
 
 Add this to your `.zshrc`:
@@ -252,7 +254,7 @@ fi
 
 # 6. Core Aliases (Daily Use)
 
-Add some of these to your `.zshrc`:
+Add some of these to your `.alias` or get inspiration from them:
 
 ```bash
 ## taskwarrior
@@ -426,7 +428,7 @@ ttl() {
 
 ---
 
-# 6. TLDR; Commands
+# 7. TLDR; Commands
 
 ## Interactive Commands (FZF Powered)
 
@@ -486,3 +488,7 @@ The terminal becomes:
 - the planner
 - the reviewer
 - the accountability system
+
+# Bonus
+
+I highly recommend [taskwarrior-flutter](github.com/CCExtractor/taskwarrior-flutter) which syncs to my android phone my tasks. They have nightly builds on [fdroid](https://ccextractor.github.io/taskwarrior-flutter/repo/index.html)
