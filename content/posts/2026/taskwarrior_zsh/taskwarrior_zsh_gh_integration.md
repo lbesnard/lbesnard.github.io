@@ -13,20 +13,18 @@ My terminal is my main working tool. I use extensively ZSH+TMUX, and open a new 
 The goal of this setup is simple:
 
 - See my **tasks for today every time I open a terminal/panel**
-- Import **GitHub issues directly into Taskwarrior**
-- Force a **morning check-in ritual**
-- Close yesterday properly before starting today
+- Import GitHub issues directly into Taskwarrior using the latest GitHub CLI features.
+- Force a morning check-in ritual using a custom Python TUI.
+- Use "Life Hacks" over "Discipline" to stop hyperfocusing on fun tasks while avoiding important ones.
 
 I’m very good at avoiding imposed structure. It's been a life long journey.
 My TODO list must be in in my face, otherwise, I'll hyperfocus 200% on one fun task and succeed beautifully at avoiding what I don't want to do.
 
-So instead of relying on discipline, I must use life hacks.
+My Current worfklow is now:
 
-Now:
-
-- Open terminal -> Check on TODO list and focus on what needs to be done.
-
-![Example of tasks list when opening a new terminal](../tasklist.png)
+- Open terminal first time of the day -> triggers automatically [task-tui](https://github.com/lbesnard/task-tui) to review and add new tasks easily so it's not a burden
+- Every time a new terminal or panel is opened, i see my current tasks
+  ![Example of tasks list when opening a new terminal](../tasklist.png)
 
 ---
 
@@ -54,18 +52,60 @@ This setup does three things:
 
 You need:
 
-- [Taskwarrior](https://taskwarrior.org/) – <https://github.com/GothenburgBitFactory/taskwarrior>
-- [fzf](https://github.com/junegunn/fzf) – <https://github.com/junegunn/fzf>
-- [jq](https://github.com/jqlang/jq) – <https://github.com/jqlang/jq>
+- [Taskwarrior](https://taskwarrior.org/)
+- [task-tui](https://github.com/lbesnard/task-tui)
+- [fzf](https://github.com/junegunn/fzf)
+- [jq](https://github.com/jqlang/jq)
 - [GitHub CLI (`gh`)](https://github.com/cli/cli) – <https://github.com/cli/cli>
-- [Zsh](https://www.zsh.org/) – <https://sourceforge.net/projects/zsh/>
+- [Zsh](https://www.zsh.org/)/zsh/>
 - [tmux](https://github.com/tmux/tmux) (required for auto daily review)
+
+# 3. Task-TUI: The Review Engine
+
+[task-tui](https://github.com/lbesnard/task-tui) is a Terminal User Interface (TUI) for Taskwarrior, built with the Python Textual framework. It provides a seamless, keyboard-driven workflow with live updates, fuzzy searching, and automatic syncing.
+p
+![Example of task-tui](../tasktui.png)
+
+It replaces complex `task` CLI sequences with fast, discoverable key-driven actions.
+
+### Why It Changes the Game
+
+- **Live Preview & Interaction**: Navigate with Vim-style keys (`j` / `k`), and the detail panel updates instantly.
+- **Dynamic Project Colours**: Each project is automatically assigned one of 32+ unique colours for instant visual grouping.
+- **Urgency Alerts**: Tasks with urgency > 20 are highlighted in bold red so critical items stand out.
+- **Fuzzy Search Everywhere**:
+  - `/` to search all pending tasks
+  - `Ctrl+F` to search while editing dependencies
+- **Dependency Explorer**: Press `v` to view all dependencies in a modal and jump directly to them.
+- **Quick Context Actions**:
+  - `t` for Quick Due Dates (Today, Tomorrow, End of Week/Month)
+  - `p` for Quick Priority changes
+- **Batch Operations**: Use `space` to multi-select tasks.
+- **Auto-Sync**: Automatically runs `task sync` on startup and exit.
+
+### Core Daily Shortcuts
+
+- `i` → Modify selected task
+- `n` → Create new task
+- `d` → Mark as Done
+- `s` → Start/Stop task
+- `x` → Save changes
+- `u` → Undo last action
+- `q` → Quit and Sync
+
+Task-TUI reads directly from your `.taskrc`. No additional configuration is required. If a `taskserver` is configured, synchronisation happens automatically when the application closes.
+
+Instead of memorising complex `task modify` commands, everything becomes fast, visual, and muscle-memory driven.
 
 ---
 
-# 3. GitHub → Taskwarrior Integration
+# 4. GitHub → Taskwarrior Integration
 
-This is a custom `gh` alias.
+Thanks to a recent [feature request](https://github.com/cli/cli/pull/12696) and the [v2.87.0](https://github.com/cli/cli/releases/tag/v2.87.0) release of the GitHub CLI, we can now run complex queries on Project boards directly.
+
+I use this to fetch my current sprint items and import them into Taskwarrior with `CTRL-T`.
+
+![Example of gh integration](../gh_integration.png)
 
 It:
 
@@ -81,41 +121,56 @@ Add this to your `~/.config/gh/config.yml` and modify the `ORG```` and`PROJECT_N
 ```yaml
 project-sprint-taskwarrior: |-
   ! (
+    # GH_PATH="/home/lbesnard/github_repo/dotfiles/bin/gh"
+    GH_PATH="gh"
     ORG="aodn"
     PROJECT_NUMBER=72
 
-    output=$(gh project item-list $PROJECT_NUMBER --owner "$ORG" -L 1000 --format json --jq '
+    raw_output=$($GH_PATH project item-list $PROJECT_NUMBER --owner "$ORG" --format json \
+      --query "assignee:$GIT_USER iteration:@current -status:Done -status:Closed" | \
+    jq -r '
+      def color_prio(p):
+        if p == "High" then "\u001b[31m" + p + "\u001b[0m"
+        elif p == "Medium" then "\u001b[33m" + p + "\u001b[0m"
+        elif p == "Low" then "\u001b[32m" + p + "\u001b[0m"
+        else "\u001b[90mNone\u001b[0m" end;
       .items[] | 
-      select(.assignees // [] | contains(["'"$GIT_USER"'"])) | 
-      select(.status != "Done" and .status != "Closed") | 
-      ((.iteration.title // .milestone.title) // "No-Iteration") as $iter | 
-      select($iter != "No-Iteration") |
-      "\($iter)\t\(.content.number // "DRAFT")\t\(.content.title)\t\(.content.repository // "none")"' | \
-      sort -rV | \
-      fzf --reverse --multi \
-          --header "TAB: Select Multiple | ENTER: Open | CTRL-T: Add to Taskwarrior" \
-          --expect=ctrl-t \
-          --delimiter '\t' \
-          --with-nth 1,2,3)
+      (.iteration.title // "No-Iteration") as $iter |
+      (.priority // "None") as $prio |
+      (.project // "No-Project") as $pjt |
+      "\($iter)\t\(color_prio($prio))\t\u001b[36m\($pjt)\u001b[0m\t\(.content.number // "DRAFT")\t\(.content.title)\t\(.content.repository // "none")"
+    ' | \
+    sort -rV | \
+    fzf --ansi --reverse --multi \
+        --header "TAB: Select | ENTER: Open | CTRL-T: Taskwarrior" \
+        --expect=ctrl-t \
+        --delimiter '\t' \
+        --with-nth 1,2,3,4,5 \
+        --preview-window 'right:60%:wrap' \
+        --preview "$GH_PATH issue view {4} -R {6}")
 
-    [ -z "$output" ] && exit 0
+    if [ -z "$raw_output" ]; then exit 0; fi
 
-    key=$(echo "$output" | head -n 1)
-      
-    echo "$output" | tail -n +2 | while IFS= read -r line; do
-      [ -z "$line" ] && continue
-
-      num=$(echo "$line" | cut -f2)
-      title=$(echo "$line" | cut -f3)
-      repo=$(echo "$line" | cut -f4)
-
-      [ "$repo" = "none" ] && continue
+    key=$(echo "$raw_output" | head -n 1)
+    
+    echo "$raw_output" | tail -n +2 | perl -pe 's/\e\[[0-9;]*m//g' | while IFS=' ' read -r iter prio pjt num title repo; do
+      if [ -z "$num" ] || [ "$num" = "DRAFT" ] || [ "$repo" = "none" ]; then
+        continue
+      fi
 
       if [ "$key" = "ctrl-t" ]; then
-        url=$(gh issue view "$num" -R "$repo" --json url --jq .url)
-        task add "$title ($url)" project:Work due:today +today +github
+        tw_prio=$(echo "$prio" | cut -c1 | tr '[:lower:]' '[:upper:]')
+        case "$tw_prio" in
+          H|M|L) ;;
+          *) tw_prio="" ;;
+        esac
+
+        echo "📥 Importing #$num: $title"
+        url=$($GH_PATH issue view "$num" -R "$repo" --json url --jq .url)
+        task add "$title ($url)" project:"$pjt" priority:"$tw_prio" due:today +today +github
       else
-        gh issue view "$num" -R "$repo" --web
+        echo "🌐 Opening #$num in browser..."
+        $GH_PATH issue view "$num" -R "$repo" --web
       fi
     done
   )
@@ -131,7 +186,7 @@ And import sprint tasks directly into your day with `CTRL-T`.
 
 ---
 
-# 4. Automatic Morning Check-in (Zsh + TMUX)
+# 5. Automatic Morning Check-in (Zsh + TMUX)
 
 This runs **once per day** when opening a new tmux terminal.
 
@@ -145,62 +200,59 @@ It:
 Add this to your `.zshrc`:
 
 ```bash
+task-today() {
+  task rc.verbose=nothing status:pending due:today export | jq -r '
+    def color_prio(p):
+      if p == "H" then "\u001b[31mHigh\u001b[0m"
+      elif p == "M" then "\u001b[33mMed \u001b[0m"
+      elif p == "L" then "\u001b[32mLow \u001b[0m"
+      else "\u001b[90mNone\u001b[0m" end;
+    def pad(len): tostring | . + " " * (len - length);
+    if length == 0 then "No tasks for today! " else
+      (map(.project // "none") | unique) as $unique_projects |
+      [36, 35, 34, 96, 95, 94, 33, 32] as $palette |
+      (reduce range(0; $unique_projects | length) as $i ({};
+        . + {($unique_projects[$i]): $palette[$i % ($palette | length)]}
+      )) as $color_map |
+      .[] | (.id | tostring | pad(3)) as $id |
+      (.priority // " ") as $raw_prio |
+      (.project // "none") as $pjt_raw |
+      ($pjt_raw | pad(12)) as $pjt_pad |
+      ($color_map[$pjt_raw] // 37) as $code |
+      "\u001b[90m\($id)\u001b[0m  \(color_prio($raw_prio))  \u001b[\($code)m\($pjt_pad)\u001b[0m  \(.description)"
+    end
+  '
+}
+
 if command -v task > /dev/null && [[ -n "$TMUX" ]]; then
     LAST_PROMPT_FILE="$HOME/.task_last_prompt"
     TODAY=$(date +%Y-%m-%d)
 
     if [[ "$(< $LAST_PROMPT_FILE 2>/dev/null)" != "$TODAY" ]]; then
-        echo "\e[38;5;81m--- 🔍 Reviewing Overdue & Today's Tasks ---\e[0m"
+        # echo -e "\e[38;5;81m--- 🔍 Reviewing Overdue & Today's Tasks ---\e[0m"
 
-        local REFRESH_CMD="task rc.verbose=nothing status:pending export | jq -r '.[] | \"\(.id) | \(.project // \"none\") | \(.due // \"none\") | \(.description)\"'"
+        export PATH="/home/$USER/miniforge3/bin:$PATH"
+        if command -v task-tui > /dev/null; then
+          task-tui
+        else;
+           echo "run python3 -m pip install git+https://github.com/lbesnard/task-tui.git"
+        fi
 
-        while true; do
-            local fzf_input=$(eval "$REFRESH_CMD")
-            [[ -z "$fzf_input" ]] && break
-
-            local selected=$(echo "$fzf_input" | fzf \
-                --header "ALT-X: Done | ALT-C: Delete | ALT-P: Postpone | ALT-T: Set Today | ENTER: Finish" \
-                --multi --ansi --no-bold \
-                --bind "alt-x:execute(echo {+1} | xargs -I{} task {} done)+reload($REFRESH_CMD)" \
-                --bind "alt-c:execute(echo {+1} | xargs -I{} task {} delete)+reload($REFRESH_CMD)" \
-                --bind "alt-p:execute(echo {+1} | xargs -I{} task {} modify due:)+reload($REFRESH_CMD)" \
-                --bind "alt-t:execute(echo {+1} | xargs -I{} task {} modify due:$TODAY)+reload($REFRESH_CMD)" \
-                --preview "task {1} info" --preview-window=bottom:3:wrap)
-
-            break
-        done
-
-        echo "\n\e[38;5;208mAdd tasks (Empty line to finish):\e[0m"
-
-        while true; do
-            echo -n "❯ "
-            read -r input
-            [[ -z "$input" ]] && break
-            task add "$input" due:today
-        done
-
-        echo "$TODAY" > "$LAST_PROMPT_FILE"
-        task sync
-        clear
+        echo \n
+        echo -e "\e[38;5;214m--- 🗓️  Reminder: Fill yesterday's timesheet! ---\e[0m"
+          echo "$TODAY" > "$LAST_PROMPT_FILE"
     fi
-
-    echo "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
-    task today
+    echo -e "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
+    task-today
     echo ""
 fi
 ```
 
-Result:
-
-- You cannot start coding without seeing your commitments unless you type `CTRL-C`.
-- You cannot ignore unfinished work.
-- You cannot “drift”.
-
 ---
 
-# 5. Core Aliases (Daily Use)
+# 6. Core Aliases (Daily Use)
 
-Add these to your `.zshrc`:
+Add some of these to your `.zshrc`:
 
 ```bash
 ## taskwarrior
@@ -405,7 +457,7 @@ Everything is keyboard-driven.
 
 ---
 
-# 7. Taskwarrior Configuration
+# 8. Taskwarrior Configuration
 
 Minimal `.taskrc` additions:
 
